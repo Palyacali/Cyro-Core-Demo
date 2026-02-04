@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "TMYnY9i5LHM=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\fatma\\OneDrive\\Masaüstü\\Aliş\\CyroOS\\CyroOS_Core\\CyroOS_Core.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\fatma\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.2\\microsoft.aspnetcore.openapi.10.0.2.nupkg.sha512",
+    "C:\\Users\\fatma\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

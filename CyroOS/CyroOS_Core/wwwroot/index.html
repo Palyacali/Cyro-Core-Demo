@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>CyroOS | Unified System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet">
+    <style>
+        :root { --cyro: #00E5FF; --bg: #050B12; --surf: #0B1622; --glow: 0 0 15px rgba(0, 229, 255, 0.3); }
+        body { background: var(--bg); color: #F2F5F7; font-family: 'Michroma', sans-serif; margin: 0; overflow: hidden; letter-spacing: 0.08em; }
+        .screen { display: none; height: 100vh; justify-content: center; align-items: center; }
+        .active { display: flex; }
+        .box { background: var(--surf); padding: 40px; border: 1px solid var(--cyro); border-radius: 12px; box-shadow: var(--glow); width: 350px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 8px 0; background: #02060a; border: 1px solid #333; color: white; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 10px; }
+        .btn { background: #0072FF; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.3s; font-family: inherit; font-size: 9px; margin-top: 10px; }
+        .btn:hover { background: var(--cyro); color: black; box-shadow: var(--glow); letter-spacing: 0.1em; }
+        .sidebar { width: 260px; background: var(--surf); border-right: 1px solid rgba(0,229,255,0.1); padding: 40px; display: flex; flex-direction: column; }
+        .nav { padding: 15px; color: #A9B6C2; cursor: pointer; font-size: 10px; transition: 0.2s; border-radius: 8px; }
+        .nav:hover, .nav.active { color: var(--cyro); background: rgba(0,229,255,0.05); text-shadow: var(--glow); }
+        .main { flex: 1; padding: 50px; overflow-y: auto; }
+        .terminal { background: #010409; color: #00ffaa; padding: 15px; font-family: monospace; font-size: 11px; height: 180px; overflow-y: auto; border-radius: 5px; border: 1px solid #112233; }
+        .asset { background: rgba(0,229,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(0,229,255,0.1); }
+    </style>
+</head>
+<body>
+
+    <div id="loginScreen" class="screen active">
+        <div class="box">
+            <h2 style="letter-spacing: 0.3em;">CYRO OS</h2>
+            <input type="text" id="lU" placeholder="ID">
+            <input type="password" id="lP" placeholder="KEY">
+            <button class="btn" onclick="core.login()">INITIALIZE</button>
+            <p style="font-size: 8px; margin-top: 20px;">NO ID? <span onclick="ui.s('registerScreen')" style="color:var(--cyro); cursor:pointer;">REGISTER</span></p>
+        </div>
+    </div>
+
+    <div id="registerScreen" class="screen">
+        <div class="box">
+            <h2>NEW SYNC</h2>
+            <input type="text" id="rU" placeholder="NEW ID">
+            <input type="password" id="rP" placeholder="NEW KEY">
+            <button class="btn" onclick="core.reg()">SYNC DATA</button>
+            <p onclick="ui.s('loginScreen')" style="font-size: 8px; margin-top: 20px; cursor:pointer; color: var(--cyro);">RETURN TO AUTH</p>
+        </div>
+    </div>
+
+    <div id="mainScreen" class="screen" style="justify-content: flex-start; align-items: stretch;">
+        <div class="sidebar">
+            <div style="font-size: 14px; color: var(--cyro); margin-bottom: 40px;">CYRO CORE</div>
+            <div class="nav active" onclick="ui.v('Dash', event)">MAIN MENU</div>
+            <div class="nav" onclick="ui.v('Vault', event)">SECURE VAULT</div>
+            <div class="nav" onclick="ui.v('Logs', event)">SYSTEM LOGS</div>
+            <button class="btn" style="background:#441111; margin-top:auto;" onclick="location.reload()">TERMINATE</button>
+        </div>
+        <div class="main">
+            <div id="vDash">
+                <h1 id="uH">OPERATOR: NULL</h1>
+                <div style="display:flex; gap:20px; margin-top:30px;">
+                    <div class="box" style="width:160px; padding:20px;">STATUS: STABLE</div>
+                    <div class="box" style="width:160px; padding:20px;">SYNC: 98.4%</div>
+                </div>
+            </div>
+            <div id="vVault" style="display:none;">
+                <h2 style="color:var(--cyro);">VAULT STORAGE</h2>
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <input id="vT" placeholder="ASSET TITLE">
+                    <input id="vV" type="password" placeholder="SECRET DATA">
+                    <button class="btn" style="width:120px; margin-top:8px;" onclick="core.addV()">MINT</button>
+                </div>
+                <div id="vList"></div>
+            </div>
+            <div id="vLogs" style="display:none;">
+                <h2>CORE LOGS</h2>
+                <div class="terminal" id="tL">> System Loaded. Waiting for sync...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ui = {
+            s: (i) => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(i).classList.add('active'); },
+            v: (i, e) => {
+                if(i === 'Vault' && !core.vU) { core.unV(); return; }
+                document.querySelectorAll('.nav').forEach(n => n.classList.remove('active'));
+                if(e) e.target.classList.add('active');
+                ['Dash', 'Vault', 'Logs'].forEach(v => document.getElementById(`v${v}`).style.display = 'none');
+                document.getElementById(`v${i}`).style.display = 'block';
+            }
+        };
+
+        const core = {
+            user: null, vU: false,
+            log: (m) => { const l = document.getElementById('tL'); l.innerHTML += `<br>> ${m}`; l.scrollTop = l.scrollHeight; },
+            async reg() {
+                const res = await fetch('/api/auth/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ Username: rU.value, Password: rP.value, Rank: "Op" })});
+                if(res.ok) { alert("Identity Synced."); ui.s('loginScreen'); }
+            },
+            async login() {
+                const res = await fetch('/api/auth/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ Username: lU.value, Password: lP.value, Rank: "" })});
+                if(res.ok) { this.user = { u: lU.value, p: lP.value }; uH.innerText = `OPERATOR: ${this.user.u.toUpperCase()}`; ui.s('mainScreen'); this.log(`Authorized: ${this.user.u}`); }
+                else alert("Sisteme Giriş Engellendi.");
+            },
+            async unV() {
+                const p = prompt("DOUBLE-GATE SECURITY: Şifrenizi doğrulayın.");
+                if(p !== this.user.p) return alert("Hatalı Anahtar.");
+                const res = await fetch('/api/vault/sync', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ Owner: this.user.u, VaultKey: p })});
+                if(res.ok) { this.vU = true; this.rV(await res.json()); ui.v('Vault'); this.log("Vault Decrypted via PassKey."); }
+            },
+            async addV() {
+                await fetch('/api/vault/add', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ Title: vT.value, Value: vV.value, Owner: this.user.u, PassKey: this.user.p })});
+                this.log(`Asset Minted: ${vT.value}`); vT.value = ""; vV.value = ""; this.sync();
+            },
+            async delV(id) {
+                await fetch(`/api/vault/delete/${id}`, { method: 'DELETE' });
+                this.log("Asset Purged."); this.sync();
+            },
+            async sync() {
+                const res = await fetch('/api/vault/sync', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ Owner: this.user.u, VaultKey: this.user.p })});
+                this.rV(await res.json());
+            },
+            rV(d) {
+                vList.innerHTML = d.map(i => `<div class="asset"><span>${i.title.toUpperCase()}</span><span style="color:var(--cyro);">${i.value}</span><button class="btn" style="width:60px; margin:0; background:#411;" onclick="core.delV('${i.id}')">X</button></div>`).join('');
+            }
+        };
+    </script>
+</body>
+</html>
